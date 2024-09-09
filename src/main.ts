@@ -2,7 +2,7 @@ import Discord from "./Discord";
 import { getWebsites, initConfig } from "./sheets";
 
 export async function healthCheck() {
-  Logger.log("healthCheck is running...");
+	Logger.log("healthCheck is running...");
 	const config = initConfig();
 	if (config === null) {
 		Logger.log("config is null");
@@ -14,16 +14,14 @@ export async function healthCheck() {
 		return;
 	}
 
-	const text = `テストです\n\n[debug]\n- ${websites
-		.map((website) => {
-			website.healthCheck();
-			return JSON.stringify(website.result);
-		})
-		.join("\n- ")}`;
+  for (const website of websites) {
+    website.healthCheck();
+  }
 
-  
-  const discord = new Discord(config);
-	discord.send(text);
-  // await discord.sendFile();
-  return "[INFO] done.";
+	const discord = new Discord(config);
+	const failures = discord.sendSummary(websites);
+	if (failures.length > 0) {
+		await discord.sendReport(websites);
+	}
+	return "[INFO] done.";
 }

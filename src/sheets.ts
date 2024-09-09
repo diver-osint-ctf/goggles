@@ -12,7 +12,12 @@ export function getWebsites() {
 	const websites = rows.flatMap((row) => {
 		try {
 			const url = row[0];
-			const words = row[1].split("m");
+			const words = row[1].split("\n");
+      // TODO: sanitize the input "correctly"
+      if(/{.+}/.test(url) || /{.+}/.test(words)) {
+        Logger.log("Invalid input");
+        return [];
+      }
 			const website = new Website(url, words);
 			return [website];
 		} catch (e) {
