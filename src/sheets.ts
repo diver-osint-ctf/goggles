@@ -16,7 +16,7 @@ export function getWebsites() {
 			const website = new Website(url, words);
 			return [website];
 		} catch (e) {
-			console.error(e);
+			Logger.log(e);
 			return [];
 		}
 	});

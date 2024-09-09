@@ -8,7 +8,9 @@
     "build": "webpack",
     "deploy": "webpack && clasp push -f",
     "format": "biome format --write ./src",
-    "lint": "biome lint --write ./src"
+    "lint": "biome lint --write ./src",
+    "dev": "yarn deploy && clasp run healthCheck",
+    "watch": "clasp logs --watch"
   },
   "devDependencies": {
     "@babel/core": "^7.18.6",

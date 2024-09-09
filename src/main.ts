@@ -1,30 +1,11 @@
+import Discord from "./Discord";
 import { getWebsites, initConfig } from "./sheets";
-import type { Config } from "./config";
 
-function sendToDiscord(text: string, config: Config) {
-	const content = {
-		embeds: [
-			{
-				title: ":goggles: Health Check by Goggles",
-				description: text,
-				color: 15158332,
-			},
-		],
-	};
-	const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-		method: "post",
-		headers: {
-			"Content-Type": "application/json",
-		},
-		payload: JSON.stringify(content),
-	};
-	UrlFetchApp.fetch(config.discordWebhookUrl, options);
-}
-
-export function healthCheck() {
+export async function healthCheck() {
+  Logger.log("healthCheck is running...");
 	const config = initConfig();
 	if (config === null) {
-		console.error("config is null");
+		Logger.log("config is null");
 		return;
 	}
 
@@ -33,12 +14,16 @@ export function healthCheck() {
 		return;
 	}
 
-	const text = `テストです\n\n[debug]\n${websites
+	const text = `テストです\n\n[debug]\n- ${websites
 		.map((website) => {
 			website.healthCheck();
 			return JSON.stringify(website.result);
 		})
-		.join("\n")}`;
+		.join("\n- ")}`;
 
-	sendToDiscord(text, config);
+  
+  const discord = new Discord(config);
+	discord.send(text);
+  // await discord.sendFile();
+  return "[INFO] done.";
 }
