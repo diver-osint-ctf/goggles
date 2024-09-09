@@ -81,7 +81,7 @@ class Discord {
     const formData = {
       file: Utilities.newBlob(fileContent, "text/plain", fileName),
       payload_json: JSON.stringify({
-        content: "Failed websites report <@>",
+        content: this.config.mentions.map((mention) => `<@${mention}>`).join(" "),
       }),
     };
 

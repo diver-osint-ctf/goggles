@@ -40,6 +40,7 @@ export function initConfig() {
 		discordWebhookUrl: values[0][1],
 		start: values[1][1],
 		end: values[2][1],
+    mentions: values[3][1].split("\n"),
 	};
 	return config;
 }

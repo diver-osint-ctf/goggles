@@ -2,6 +2,7 @@ export type Config = {
 	discordWebhookUrl: string;
 	start: Date;
 	end: Date;
+  mentions: string[];
 };
 
 export const env = {
