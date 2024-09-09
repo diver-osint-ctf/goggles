@@ -13,11 +13,11 @@ export function getWebsites() {
 		try {
 			const url = row[0];
 			const words = row[1].split("\n");
-      // TODO: sanitize the input "correctly"
-      if(/{.+}/.test(url) || /{.+}/.test(words)) {
-        Logger.log("Invalid input");
-        return [];
-      }
+			// TODO: sanitize the input "correctly"
+			if (/{.+}/.test(url) || /{.+}/.test(words)) {
+				Logger.log("Invalid input");
+				return [];
+			}
 			const website = new Website(url, words);
 			return [website];
 		} catch (e) {
@@ -40,7 +40,7 @@ export function initConfig() {
 		discordWebhookUrl: values[0][1],
 		start: values[1][1],
 		end: values[2][1],
-    mentions: values[3][1].split("\n"),
+		mentions: values[3][1].split("\n"),
 	};
 	return config;
 }
