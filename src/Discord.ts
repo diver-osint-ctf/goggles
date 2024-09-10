@@ -18,7 +18,7 @@ class Discord {
 			return [
 				{
 					title: `Nice! ${websiteCount} All websites are healthy :tada:`,
-					description: `If you want to see list of websites, click the [link](${env.SHEET_URL}).`,
+					description: `If you want to see list of websites, click [here](${env.SHEET_URL}).`,
 					color: SUCCESS_COLOR,
 				},
 			];
@@ -26,7 +26,7 @@ class Discord {
 		return [
 			{
 				title: `${failures.length} Website is unhealthy :tired_face:`,
-				description: `If you want to see list of websites, click the [link](${env.SHEET_URL}).`,
+				description: `If you want to see list of websites, click [here](${env.SHEET_URL}).`,
 				color: FAILURE_COLOR,
 				author: {
 					name: "Goggles",
