@@ -37,6 +37,8 @@ yarn && yarn build
 
 ![triggers](./assets/triggers.png)
 
+また、環境変数「SHEET_URL」にスプレッドシートの共有リンクを設定してください。
+
 ### 2. Add a website
 
 新しい Web サイトを監視する場合は、「websites」シートに新しい行を追加します。
