@@ -1,46 +1,65 @@
-# 🥽 Goggles
+# Goggles - Website Health Checker
 
-OSINT 問題の想定解で使用する、Web サイトの死活監視を行うツール。一般的な Web 問題でも使用することができます。
+Website health checker that monitors multiple websites and sends Discord notifications when sites are down.
 
-<div id="image-table" align="center">
-  <table>
-    <tr>
-      <td style="padding:10px;border:none;">
-        <img src="./assets/success.png" />
-      </td>
-      <td style="padding:10px;border:none;">
-        <img src="./assets/error.png" />
-      </td>
-    </tr>
-  </table>
-</div>
+## Quick Start
 
-## How to use
+1. **Configure:**
 
-### 1. Setup
+   - Edit `config.yaml` with your Discord webhook URL
+   - Edit `urls.csv` with websites to monitor
 
-スプレッドシートを作成し、「websites」シートに以下のような形式で Web サイトの情報を記入します。
+2. **Run:**
 
-![websites](./assets/websites.png)
+   ```bash
+   # Using Docker (recommended)
+   docker-compose up -d
 
-次に、「config」シートに以下のような形式で設定を記入します。
+   # Or using Go directly
+   go run cmd/main.go
+   ```
 
-![config](./assets/config.png)
+## Configuration
 
-適切に監視対象の URL や Webhook URL、期間やメンションを設定した後、Apps Script に dist/index.js を設定します。dist/index.js は以下のコマンドで生成できます。
+### config.yaml
 
-```bash
-yarn && yarn build
+```yaml
+discord_webhook_url: https://discord.com/api/webhooks/YOUR_WEBHOOK_URL
+timezone: Asia/Tokyo
+start: 2025/6/3 21:07:25
+end: 2025/6/9 21:07:25
+threads: 4
+mentions:
+  - 12345 # Discord user ID
 ```
 
-その後、Triggers をこのように設定します。
+### urls.csv
 
-![triggers](./assets/triggers.png)
+```csv
+URL, CHECK_WORDS
+https://www.google.com, Google
+https://example.com, example,test
+```
 
-また、環境変数「SHEET_URL」にスプレッドシートの共有リンクを設定してください。
+## Usage
 
-### 2. Add a website
+```bash
+# Build and run
+make build
+./goggles
 
-新しい Web サイトを監視する場合は、「websites」シートに新しい行を追加します。
+# Verbose mode (saves HTML logs when checks fail)
+./goggles -v
 
-A 列に URL を、B 列にその URL へアクセスして Status 200 が返ってきたときに表示されて欲しい文字列(例: flag)を記入します。B 列に指定する文字列は改行区切りで複数を OR 指定することができます。もし And 条件で指定したい場合は、列を 2 つ作成することで対応できます。
+# Single URL check
+./goggles -s https://example.com
+```
+
+## Available Commands
+
+- `make build` - Build the application
+- `make run` - Run the application
+- `make test` - Run tests
+- `make clean` - Clean build artifacts
+- `make deps` - Install dependencies
+

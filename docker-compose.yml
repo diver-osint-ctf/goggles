@@ -1,0 +1,31 @@
+services:
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: goggles-scheduler
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./urls.csv:/app/urls.csv:ro
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    # Run health check every 10 minutes
+    command: ["sh", "-c", "while true; do /app/goggles; sleep 60; done"]
+
+  # Optional: One-time execution service
+  goggles:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: goggles-health-checker
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./urls.csv:/app/urls.csv:ro
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    # Run once and exit (for manual execution)
+    command: ["/app/goggles"]
+    profiles:
+      - manual
