@@ -10,8 +10,8 @@ services:
     environment:
       - TZ=UTC
     restart: unless-stopped
-    # Run health check every 10 minutes
-    command: ["sh", "-c", "while true; do /app/goggles; sleep 60; done"]
+    # Run health check every 60 minutes
+    command: ["sh", "-c", "while true; do /app/goggles; sleep 3600; done"]
 
   # Optional: One-time execution service
   goggles:
