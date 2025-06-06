@@ -86,8 +86,38 @@ func (c *Client) SendSummary(failures []health.Result, totalCount int) error {
 
 // SendReport sends a detailed report of failures
 func (c *Client) SendReport(failures []health.Result, mentions []string) error {
-	report := c.generateReport(failures)
+	const batchSize = 5
 
+	// If failures are 5 or less, send as usual
+	if len(failures) <= batchSize {
+		report := c.generateReport(failures)
+		return c.sendSingleReport(report, mentions)
+	}
+
+	// Split failures into batches of 5
+	for i := 0; i < len(failures); i += batchSize {
+		end := i + batchSize
+		if end > len(failures) {
+			end = len(failures)
+		}
+
+		batch := failures[i:end]
+		batchNumber := (i / batchSize) + 1
+		totalBatches := (len(failures) + batchSize - 1) / batchSize
+
+		report := c.generateBatchReport(batch, batchNumber, totalBatches)
+
+		err := c.sendSingleReport(report, mentions)
+		if err != nil {
+			return fmt.Errorf("failed to send batch %d: %w", batchNumber, err)
+		}
+	}
+
+	return nil
+}
+
+// sendSingleReport sends a single report message
+func (c *Client) sendSingleReport(report string, mentions []string) error {
 	content := ""
 	if len(mentions) > 0 {
 		mentionStrs := make([]string, len(mentions))
@@ -97,13 +127,46 @@ func (c *Client) SendReport(failures []health.Result, mentions []string) error {
 		content = strings.Join(mentionStrs, " ")
 	}
 
-	// Send as file attachment (simplified version - just send as message content)
 	message := Message{
 		Content: content + "\n```markdown\n" + report + "\n```",
 		TTS:     false,
 	}
 
 	return c.sendMessage(message)
+}
+
+// generateBatchReport creates a markdown report of failures for a specific batch
+func (c *Client) generateBatchReport(failures []health.Result, batchNumber, totalBatches int) string {
+	var sb strings.Builder
+
+	if totalBatches > 1 {
+		sb.WriteString(fmt.Sprintf("# Failed Websites Report (%d/%d)\n\n", batchNumber, totalBatches))
+	} else {
+		sb.WriteString("# Failed Websites Report\n\n")
+	}
+
+	for _, failure := range failures {
+		sb.WriteString(fmt.Sprintf("- url: %s\n", failure.Website.URL))
+
+		if len(failure.Website.CheckWords) > 0 {
+			sb.WriteString("  - check words:\n")
+			for _, word := range failure.Website.CheckWords {
+				sb.WriteString(fmt.Sprintf("    - %s\n", word))
+			}
+		}
+
+		sb.WriteString("  - factors:\n")
+		sb.WriteString(fmt.Sprintf("    - HTTP Response Code: %d\n", failure.Status))
+		sb.WriteString(fmt.Sprintf("    - Has Check Words: %t\n", failure.HasWord))
+
+		if failure.Error != "" {
+			sb.WriteString(fmt.Sprintf("    - Error: %s\n", failure.Error))
+		}
+		sb.WriteString("\n")
+	}
+
+	sb.WriteString("Reported by [Goggles](https://github.com/diver-osint-ctf/goggles)")
+	return sb.String()
 }
 
 // generateReport creates a markdown report of failures

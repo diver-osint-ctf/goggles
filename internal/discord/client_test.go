@@ -2,6 +2,7 @@ package discord
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -220,6 +221,131 @@ func TestClient_generateReport(t *testing.T) {
 		if !contains(report, element) {
 			t.Errorf("Expected report to contain '%s', got:\n%s", element, report)
 		}
+	}
+}
+
+func TestClient_SendReportBatching(t *testing.T) {
+	// Create 12 failures to test batching (should result in 3 batches of 5, 5, and 2)
+	failures := make([]health.Result, 12)
+	for i := 0; i < 12; i++ {
+		failures[i] = health.Result{
+			Website: website.Website{
+				URL:        fmt.Sprintf("https://example%d.com", i+1),
+				CheckWords: []string{"test"},
+			},
+			OK:      false,
+			Status:  404,
+			HasWord: false,
+			Error:   "Not found",
+		}
+	}
+
+	mentions := []string{"123456789"}
+
+	// Track the number of requests received
+	requestCount := 0
+	var receivedMessages []Message
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestCount++
+
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Fatalf("Failed to read request body: %v", err)
+		}
+
+		var message Message
+		err = json.Unmarshal(body, &message)
+		if err != nil {
+			t.Fatalf("Failed to unmarshal request body: %v", err)
+		}
+
+		receivedMessages = append(receivedMessages, message)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	// Test the client
+	client := NewClient(server.URL)
+	err := client.SendReport(failures, mentions)
+
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	// Should receive 3 batched requests (5 + 5 + 2 = 12 failures)
+	expectedRequests := 3
+	if requestCount != expectedRequests {
+		t.Errorf("Expected %d requests, got %d", expectedRequests, requestCount)
+	}
+
+	// Verify each batch contains the correct batch information
+	for i, message := range receivedMessages {
+		batchNumber := i + 1
+		expectedBatchHeader := fmt.Sprintf("# Failed Websites Report (%d/3)", batchNumber)
+
+		if !contains(message.Content, expectedBatchHeader) {
+			t.Errorf("Expected batch %d to contain header '%s'", batchNumber, expectedBatchHeader)
+		}
+
+		// Verify mentions are included in each batch
+		if !contains(message.Content, "<@123456789>") {
+			t.Errorf("Expected mentions in batch %d", batchNumber)
+		}
+	}
+}
+
+func TestClient_SendReportNoBatching(t *testing.T) {
+	// Create only 3 failures (should not be batched)
+	failures := make([]health.Result, 3)
+	for i := 0; i < 3; i++ {
+		failures[i] = health.Result{
+			Website: website.Website{
+				URL:        fmt.Sprintf("https://example%d.com", i+1),
+				CheckWords: []string{"test"},
+			},
+			OK:      false,
+			Status:  404,
+			HasWord: false,
+		}
+	}
+
+	requestCount := 0
+	var receivedMessage Message
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestCount++
+
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Fatalf("Failed to read request body: %v", err)
+		}
+
+		err = json.Unmarshal(body, &receivedMessage)
+		if err != nil {
+			t.Fatalf("Failed to unmarshal request body: %v", err)
+		}
+
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	// Test the client
+	client := NewClient(server.URL)
+	err := client.SendReport(failures, []string{})
+
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	// Should receive only 1 request (no batching needed)
+	if requestCount != 1 {
+		t.Errorf("Expected 1 request, got %d", requestCount)
+	}
+
+	// Should not contain batch information
+	if contains(receivedMessage.Content, "1/1") {
+		t.Error("Expected no batch information for small report")
 	}
 }
 
