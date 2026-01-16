@@ -53,6 +53,9 @@ make build
 
 # Single URL check
 ./goggles -s https://example.com
+
+# Scheduler mode
+docker-compose up -d scheduler 
 ```
 
 ## Available Commands
