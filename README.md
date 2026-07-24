@@ -13,7 +13,7 @@ Website health checker that monitors multiple websites and sends Discord notific
 
    ```bash
    # Using Docker (recommended)
-   docker-compose up -d
+   docker compose up -d
 
    # Or using Go directly
    go run cmd/main.go
@@ -36,9 +36,9 @@ mentions:
 ### urls.csv
 
 ```csv
-URL, CHECK_WORDS
-https://www.google.com, Google
-https://example.com, example,test
+URL,CHECK_WORDS,ジャンル名,問題名,作問者,備考
+https://www.google.com, Google,,,,
+https://example.com, example,test,,,
 ```
 
 ## Usage
